@@ -178,6 +178,134 @@
     font-size:.9rem;
   }
 
+  /* ============ DEMO INTERACTIVA (catálogo + pedido) ============ */
+  .demo-app{
+    background:var(--paper);
+    border:1.5px dashed var(--rule);
+    border-radius:4px;
+    padding:20px;
+  }
+  .rubro-tabs{
+    display:flex;
+    gap:8px;
+    margin-bottom:16px;
+    flex-wrap:wrap;
+  }
+  .rubro-tab{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:.82rem;
+    background:var(--card);
+    border:1.5px solid var(--rule);
+    color:var(--ink-soft);
+    padding:8px 14px;
+    border-radius:3px;
+    cursor:pointer;
+  }
+  .rubro-tab.active{
+    background:var(--pharma-dark);
+    border-color:var(--pharma-dark);
+    color:#FBF8F1;
+  }
+  .productos-list{
+    display:flex;
+    flex-direction:column;
+    gap:0;
+  }
+  .producto-row{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+    padding:12px 4px;
+    border-top:1px dashed var(--rule);
+  }
+  .producto-row:first-child{border-top:none;}
+  .producto-info{flex:1; min-width:0;}
+  .producto-info .nombre{font-weight:600; font-size:.98rem;}
+  .producto-info .precio{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:.82rem;
+    color:var(--ink-soft);
+  }
+  .qty-control{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    flex-shrink:0;
+  }
+  .qty-btn{
+    width:30px; height:30px;
+    border:1.5px solid var(--rule);
+    background:var(--card);
+    color:var(--ink);
+    font-size:1.1rem;
+    font-weight:700;
+    border-radius:3px;
+    cursor:pointer;
+    line-height:1;
+  }
+  .qty-btn:hover{background:var(--paper);}
+  .qty-val{
+    font-family:'IBM Plex Mono', monospace;
+    min-width:1.5em;
+    text-align:center;
+    font-weight:600;
+  }
+  .demo-cta-row{
+    margin-top:18px;
+    display:flex;
+    gap:10px;
+    flex-wrap:wrap;
+    align-items:center;
+  }
+  .demo-btn{
+    font-family:'Work Sans', sans-serif;
+    font-weight:600;
+    font-size:.95rem;
+    background:var(--pharma-dark);
+    color:#FBF8F1;
+    border:none;
+    padding:11px 20px;
+    border-radius:3px;
+    cursor:pointer;
+  }
+  .demo-btn:hover{background:#1B3A31;}
+  .demo-btn:disabled{background:var(--rule); cursor:not-allowed;}
+  .demo-total{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:.9rem;
+    color:var(--ink-soft);
+  }
+  .pedido-armado{
+    margin-top:16px;
+    background:var(--card);
+    border:1.5px solid var(--rule);
+    border-radius:4px;
+    padding:16px;
+    display:none;
+  }
+  .pedido-armado.show{display:block;}
+  .pedido-armado pre{
+    white-space:pre-wrap;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:.85rem;
+    margin:0 0 12px 0;
+    color:var(--ink);
+  }
+  .pedido-actions{display:flex; gap:10px; flex-wrap:wrap;}
+  .pedido-actions a, .pedido-actions button{
+    font-family:'Work Sans', sans-serif;
+    font-size:.88rem;
+    font-weight:600;
+    text-decoration:none;
+    border:1.5px solid var(--pharma-dark);
+    color:var(--pharma-dark);
+    background:transparent;
+    padding:8px 14px;
+    border-radius:3px;
+    cursor:pointer;
+  }
+
   /* ============ CÓMO TRABAJO ============ */
   .pasos{list-style:none; margin:24px 0 0 0; padding:0;}
   .pasos li{
@@ -300,9 +428,10 @@
       <div class="quien-col si">
         <h3>Para quién sí</h3>
         <ul>
-          <li>Corralones con pedidos repetidos de materiales por WhatsApp</li>
-          <li>Farmacias con productos de venta libre que se piden seguido</li>
-          <li>Negocios donde el mostrador pierde tiempo respondiendo "¿tenés stock?"</li>
+          <li>Corralones y ferreterías con pedidos repetidos de materiales</li>
+          <li>Farmacias y veterinarias con productos que se piden seguido</li>
+          <li>Rotiserías, restaurantes y pizzerías con menú fijo por WhatsApp</li>
+          <li>Deco textil y negocios con catálogo de productos con precio</li>
         </ul>
       </div>
       <div class="quien-col no">
@@ -333,8 +462,28 @@
           <p>El cliente elige productos en el catálogo y te llega un mensaje de WhatsApp armado, listo para confirmar.</p>
         </div>
       </div>
-      <div class="demo-box">
-        [ acá va la demo interactiva — se arma en el Día 5 ]
+      <div class="demo-app">
+        <div class="rubro-tabs">
+          <button class="rubro-tab active" data-rubro="corralon">Corralón</button>
+          <button class="rubro-tab" data-rubro="farmacia">Farmacia</button>
+          <button class="rubro-tab" data-rubro="rotiseria">Rotisería</button>
+          <button class="rubro-tab" data-rubro="veterinaria">Veterinaria</button>
+        </div>
+
+        <div class="productos-list" id="productos-list"></div>
+
+        <div class="demo-cta-row">
+          <button class="demo-btn" id="btn-generar" disabled>Generar pedido de WhatsApp</button>
+          <span class="demo-total" id="demo-total">Elegí productos para armar el pedido</span>
+        </div>
+
+        <div class="pedido-armado" id="pedido-armado">
+          <pre id="pedido-texto"></pre>
+          <div class="pedido-actions">
+            <button id="btn-copiar">Copiar mensaje</button>
+            <a id="link-whatsapp" href="#" target="_blank" rel="noopener">Abrir en WhatsApp</a>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -427,5 +576,122 @@
   <div class="wrap">Kadesca — Soluciones IA · Karina Descalzo</div>
 </footer>
 
+
+<script>
+  // ============ DEMO: catálogo con pedido ============
+  // Datos de ejemplo. Se pueden reemplazar por el catálogo real de cada cliente.
+  const CATALOGOS = {
+    corralon: [
+      { nombre: "Bolsa de cemento 50kg", precio: "8.500" },
+      { nombre: "Caño PVC 110mm (x3m)", precio: "6.200" },
+      { nombre: "Arena gruesa (m³)", precio: "22.000" },
+      { nombre: "Ladrillo hueco (x100u)", precio: "45.000" }
+    ],
+    farmacia: [
+      { nombre: "Paracetamol 500mg (x20)", precio: "2.100" },
+      { nombre: "Alcohol en gel 250ml", precio: "1.850" },
+      { nombre: "Ibuprofeno 400mg (x10)", precio: "1.600" },
+      { nombre: "Curitas surtidas (x30)", precio: "1.200" }
+    ],
+    rotiseria: [
+      { nombre: "Milanesas de pollo (x4)", precio: "4.900" },
+      { nombre: "Empanadas de carne (x12)", precio: "6.500" },
+      { nombre: "Pizza muzzarella grande", precio: "5.200" },
+      { nombre: "Ensalada mixta", precio: "2.800" }
+    ],
+    veterinaria: [
+      { nombre: "Alimento balanceado 10kg", precio: "18.500" },
+      { nombre: "Antiparasitario perro med.", precio: "3.200" },
+      { nombre: "Shampoo antipulgas 500ml", precio: "4.100" },
+      { nombre: "Collar isabelino", precio: "2.600" }
+    ]
+  };
+
+  let rubroActual = "corralon";
+  let cantidades = {};
+
+  const listEl = document.getElementById("productos-list");
+  const btnGenerar = document.getElementById("btn-generar");
+  const totalEl = document.getElementById("demo-total");
+  const pedidoBox = document.getElementById("pedido-armado");
+  const pedidoTexto = document.getElementById("pedido-texto");
+  const linkWhatsapp = document.getElementById("link-whatsapp");
+  const btnCopiar = document.getElementById("btn-copiar");
+
+  function renderProductos() {
+    cantidades = {};
+    listEl.innerHTML = "";
+    CATALOGOS[rubroActual].forEach((prod, i) => {
+      cantidades[i] = 0;
+      const row = document.createElement("div");
+      row.className = "producto-row";
+      row.innerHTML = `
+        <div class="producto-info">
+          <div class="nombre">${prod.nombre}</div>
+          <div class="precio">$ ${prod.precio}</div>
+        </div>
+        <div class="qty-control">
+          <button class="qty-btn" data-i="${i}" data-op="menos" aria-label="Restar">−</button>
+          <span class="qty-val" id="qty-${i}">0</span>
+          <button class="qty-btn" data-i="${i}" data-op="mas" aria-label="Sumar">+</button>
+        </div>
+      `;
+      listEl.appendChild(row);
+    });
+    actualizarEstado();
+    pedidoBox.classList.remove("show");
+  }
+
+  function actualizarEstado() {
+    const total = Object.values(cantidades).reduce((a, b) => a + b, 0);
+    if (total > 0) {
+      totalEl.textContent = `${total} producto${total > 1 ? "s" : ""} seleccionado${total > 1 ? "s" : ""}`;
+      btnGenerar.disabled = false;
+    } else {
+      totalEl.textContent = "Elegí productos para armar el pedido";
+      btnGenerar.disabled = true;
+    }
+  }
+
+  listEl.addEventListener("click", (e) => {
+    const btn = e.target.closest(".qty-btn");
+    if (!btn) return;
+    const i = btn.dataset.i;
+    const op = btn.dataset.op;
+    if (op === "mas") cantidades[i]++;
+    if (op === "menos" && cantidades[i] > 0) cantidades[i]--;
+    document.getElementById(`qty-${i}`).textContent = cantidades[i];
+    actualizarEstado();
+  });
+
+  document.querySelectorAll(".rubro-tab").forEach(tab => {
+    tab.addEventListener("click", () => {
+      document.querySelectorAll(".rubro-tab").forEach(t => t.classList.remove("active"));
+      tab.classList.add("active");
+      rubroActual = tab.dataset.rubro;
+      renderProductos();
+    });
+  });
+
+  btnGenerar.addEventListener("click", () => {
+    const items = CATALOGOS[rubroActual]
+      .map((prod, i) => cantidades[i] > 0 ? `• ${cantidades[i]}x ${prod.nombre}` : null)
+      .filter(Boolean);
+    const mensaje = `Hola! Quiero hacer este pedido:\n\n${items.join("\n")}\n\n¿Me confirmás disponibilidad y precio final?`;
+    pedidoTexto.textContent = mensaje;
+    pedidoBox.classList.add("show");
+    // Placeholder de WhatsApp — se reemplaza por el número real del negocio
+    linkWhatsapp.href = "https://wa.me/54911XXXXXXXX?text=" + encodeURIComponent(mensaje);
+  });
+
+  btnCopiar.addEventListener("click", () => {
+    navigator.clipboard.writeText(pedidoTexto.textContent).then(() => {
+      btnCopiar.textContent = "¡Copiado!";
+      setTimeout(() => { btnCopiar.textContent = "Copiar mensaje"; }, 1500);
+    });
+  });
+
+  renderProductos();
+</script>
 </body>
 </html>
