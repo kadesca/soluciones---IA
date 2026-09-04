@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kadesca — Armador de presupuestos para fletes</title>
+<meta name="description" content="Armador de presupuestos automático para transportes, fletes y logística.">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Zilla+Slab:wght@500;600;700&family=Work+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+
+<style>
+  /* ============ TOKENS ============ */
+  :root{
+    --paper:#EDE6D6;
+    --card:#FBF8F1;
+    --ink:#26241F;
+    --ink-soft:#5C574B;
+    --rule:#C9BFA8;
+    --brick:#A84A2A;
+    --pharma:#2F6F5E;
+    /* En esta página el acento principal es el ladrillo/óxido (ruta, carga), no el verde */
+    --pharma-dark:#8A3B21;
+    --max:700px;
+  }
+
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    margin:0;
+    background:var(--paper);
+    color:var(--ink);
+    font-family:'Work Sans', sans-serif;
+    font-size:17px;
+    line-height:1.55;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  h1,h2,h3{
+    font-family:'Zilla Slab', serif;
+    font-weight:700;
+    line-height:1.15;
+    margin:0 0 .5em 0;
+    color:var(--ink);
+  }
+
+  a{color:inherit;}
+
+  .wrap{
+    max-width:var(--max);
+    margin:0 auto;
+    padding:0 24px;
+  }
+
+  section{
+    padding:64px 0;
+    border-bottom:2px dashed var(--rule);
+  }
+  section:last-of-type{border-bottom:none;}
+
+  header.top{
+    padding:28px 0 20px;
+    border-bottom:2px dashed var(--rule);
+  }
+  header.top .wrap{
+    display:flex;
+    justify-content:space-between;
+    align-items:baseline;
+    flex-wrap:wrap;
+    gap:8px;
+  }
+  .brand{
+    font-family:'Zilla Slab', serif;
+    font-weight:700;
+    font-size:1.3rem;
+    letter-spacing:.01em;
+  }
+  .brand span{color:var(--pharma-dark);}
+  nav.top-nav a{
+    text-decoration:none;
+    color:var(--ink-soft);
+    font-size:.92rem;
+    margin-left:18px;
+  }
+  nav.top-nav a:hover{color:var(--ink);}
+  nav.top-nav a.switch{
+    border:1.5px solid var(--rule);
+    padding:4px 10px;
+    border-radius:3px;
+  }
+
+  .hero h1{
+    font-size:2.1rem;
+    max-width:16ch;
+  }
+  .hero p.lead{
+    font-size:1.15rem;
+    color:var(--ink-soft);
+    max-width:48ch;
+    margin:0 0 28px 0;
+  }
+  .hero-name{
+    font-size:.95rem;
+    color:var(--ink-soft);
+    margin-top:-8px;
+    margin-bottom:18px;
+  }
+
+  .quien-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:28px;
+    margin-top:24px;
+  }
+  .quien-col h3{
+    font-size:1.05rem;
+    display:flex;
+    align-items:center;
+    gap:8px;
+  }
+  .quien-col.si h3::before{content:"✓"; color:var(--pharma-dark); font-weight:700;}
+  .quien-col.no h3::before{content:"✕"; color:var(--brick); font-weight:700;}
+  .quien-col ul{padding-left:1.1em; margin:.6em 0 0 0; color:var(--ink-soft);}
+  .quien-col li{margin-bottom:.5em;}
+
+  @media (max-width:560px){
+    .quien-grid{grid-template-columns:1fr;}
+  }
+
+  .ticket{
+    background:var(--card);
+    border:1.5px solid var(--rule);
+    border-radius:4px;
+    padding:28px 24px;
+    margin-top:20px;
+    position:relative;
+  }
+  .ticket::before,.ticket::after{
+    content:"";
+    position:absolute;
+    width:20px;height:20px;
+    background:var(--paper);
+    border-radius:50%;
+    top:50%;
+    transform:translateY(-50%);
+  }
+  .ticket::before{left:-10px;}
+  .ticket::after{right:-10px;}
+  .ticket-label{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:.78rem;
+    letter-spacing:.04em;
+    color:var(--ink-soft);
+    text-transform:uppercase;
+  }
+  .before-after{
+    display:flex;
+    gap:20px;
+    margin:14px 0 20px 0;
+    flex-wrap:wrap;
+  }
+  .before-after > div{flex:1; min-width:220px;}
+  .before-after h4{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:.82rem;
+    margin:0 0 6px 0;
+    color:var(--ink-soft);
+  }
+  .before-after p{margin:0; font-size:.98rem;}
+
+  /* ============ FORM DE COTIZACIÓN ============ */
+  .cotizador{
+    background:var(--paper);
+    border:1.5px dashed var(--rule);
+    border-radius:4px;
+    padding:20px;
+  }
+  .campo{
+    margin-bottom:16px;
+  }
+  .campo label{
+    display:block;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:.8rem;
+    color:var(--ink-soft);
+    margin-bottom:6px;
+    text-transform:uppercase;
+    letter-spacing:.03em;
+  }
+  .campo input, .campo select{
+    width:100%;
+    font-family:'Work Sans', sans-serif;
+    font-size:.98rem;
+    padding:10px 12px;
+    border:1.5px solid var(--rule);
+    border-radius:3px;
+    background:var(--card);
+    color:var(--ink);
+  }
+  .campo-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:14px;
+  }
+  @media (max-width:560px){
+    .campo-grid{grid-template-columns:1fr;}
+  }
+  .demo-btn{
+    font-family:'Work Sans', sans-serif;
+    font-weight:600;
+    font-size:.95rem;
+    background:var(--pharma-dark);
+    color:#FBF8F1;
+    border:none;
+    padding:11px 20px;
+    border-radius:3px;
+    cursor:pointer;
+    margin-top:6px;
+  }
+  .demo-btn:hover{background:#6E2E19;}
+
+  .resultado{
+    margin-top:18px;
+    background:var(--card);
+    border:1.5px solid var(--rule);
+    border-radius:4px;
+    padding:18px;
+    display:none;
+  }
+  .resultado.show{display:block;}
+  .resultado .rango{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:1.1rem;
+    font-weight:600;
+    color:var(--pharma-dark);
+    margin-bottom:8px;
+  }
+  .resultado .aclaracion{
+    font-size:.88rem;
+    color:var(--ink-soft);
+    margin-bottom:14px;
+  }
+  .resultado pre{
+    white-space:pre-wrap;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:.85rem;
+    background:var(--paper);
+    border:1px dashed var(--rule);
+    border-radius:3px;
+    padding:12px;
+    margin:0 0 12px 0;
+    color:var(--ink);
+  }
+  .resultado-actions{display:flex; gap:10px; flex-wrap:wrap;}
+  .resultado-actions a, .resultado-actions button{
+    font-family:'Work Sans', sans-serif;
+    font-size:.88rem;
+    font-weight:600;
+    text-decoration:none;
+    border:1.5px solid var(--pharma-dark);
+    color:var(--pharma-dark);
+    background:transparent;
+    padding:8px 14px;
+    border-radius:3px;
+    cursor:pointer;
+  }
+
+  .pasos{list-style:none; margin:24px 0 0 0; padding:0;}
+  .pasos li{
+    display:flex;
+    gap:16px;
+    padding:14px 0;
+    border-top:1px dashed var(--rule);
+  }
+  .pasos li:first-child{border-top:none;}
+  .paso-num{
+    font-family:'IBM Plex Mono', monospace;
+    color:var(--pharma-dark);
+    font-weight:600;
+    flex-shrink:0;
+    width:28px;
+  }
+
+  .presupuesto-box{
+    background:var(--card);
+    border:1.5px solid var(--rule);
+    border-radius:4px;
+    padding:24px;
+    margin-top:16px;
+  }
+  .presupuesto-box p{margin:0 0 12px 0;}
+  .presupuesto-box p:last-child{margin-bottom:0;}
+
+  details{
+    border-top:1px dashed var(--rule);
+    padding:16px 0;
+  }
+  details:last-of-type{border-bottom:1px dashed var(--rule);}
+  summary{
+    cursor:pointer;
+    font-weight:600;
+    font-size:1.02rem;
+    list-style:none;
+  }
+  summary::-webkit-details-marker{display:none;}
+  summary::before{
+    content:"+";
+    display:inline-block;
+    width:1.2em;
+    color:var(--pharma-dark);
+    font-weight:700;
+  }
+  details[open] summary::before{content:"–";}
+  details p{
+    margin:10px 0 0 1.2em;
+    color:var(--ink-soft);
+  }
+
+  .cta-final{
+    text-align:center;
+    padding-top:56px;
+  }
+  .cta-final h2{font-size:1.7rem;}
+  .cta-final p{color:var(--ink-soft); max-width:44ch; margin:0 auto 28px auto;}
+
+  .stub-btn{
+    display:inline-block;
+    background:var(--pharma-dark);
+    color:#FBF8F1;
+    text-decoration:none;
+    font-family:'Zilla Slab', serif;
+    font-weight:600;
+    font-size:1.08rem;
+    padding:16px 34px;
+    border-radius:3px;
+    border:1.5px dashed rgba(251,248,241,.5);
+    outline-offset:3px;
+    transition:background .15s ease;
+  }
+  .stub-btn:hover{background:#6E2E19;}
+  .stub-btn:focus-visible{outline:3px solid var(--pharma);}
+
+  footer{
+    text-align:center;
+    padding:32px 0 48px 0;
+    font-size:.85rem;
+    color:var(--ink-soft);
+  }
+
+  @media (max-width:480px){
+    .hero h1{font-size:1.65rem;}
+    section{padding:44px 0;}
+  }
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="wrap">
+    <div class="brand">Kadesca <span>· Fletes y logística</span></div>
+    <nav class="top-nav">
+      <a href="#demo">Demo</a>
+      <a href="#trabajo">Cómo trabajo</a>
+      <a href="#faq">Preguntas</a>
+      <a class="switch" href="index.html">Ver catálogos →</a>
+    </nav>
+  </div>
+</header>
+
+<!-- 1. QUIÉN SOY Y QUÉ OFREZCO -->
+<section class="hero">
+  <div class="wrap">
+    <p class="hero-name">Karina Descalzo — Kadesca</p>
+    <h1>Presupuestos de flete automáticos, con tu mismo criterio de siempre.</h1>
+    <p class="lead">Arreglo el problema de cotizar cada viaje a mano: el cliente carga origen, destino y tipo de carga, y le llega una estimación automática con el pedido armado, listo para que vos confirmes el número final.</p>
+  </div>
+</section>
+
+<!-- 2. PARA QUIÉN SÍ / PARA QUIÉN NO -->
+<section id="para-quien">
+  <div class="wrap">
+    <h2>¿Es para tu negocio?</h2>
+    <div class="quien-grid">
+      <div class="quien-col si">
+        <h3>Para quién sí</h3>
+        <ul>
+          <li>Fleteros y transportes chicos o medianos con cotizaciones repetidas</li>
+          <li>Empresas de logística que cotizan por distancia, peso o tipo de carga</li>
+          <li>Negocios donde varias personas cotizan y quieren un criterio único</li>
+        </ul>
+      </div>
+      <div class="quien-col no">
+        <h3>Para quién no</h3>
+        <ul>
+          <li>Transportes donde cada viaje se negocia por completo, sin ningún criterio fijo</li>
+          <li>Quien busca un precio final automático sin revisión humana</li>
+          <li>Cargas muy especiales que necesitan inspección previa siempre</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 3. DEMO -->
+<section id="demo">
+  <div class="wrap">
+    <h2>Cómo se ve, en la práctica</h2>
+    <div class="ticket">
+      <span class="ticket-label">Cotización — Kadesca</span>
+      <div class="before-after">
+        <div>
+          <h4>Antes</h4>
+          <p>Cada consulta se calcula a mano, con una tarifa en la cabeza. Tarda, y a veces se cotiza distinto según quién atienda.</p>
+        </div>
+        <div>
+          <h4>Después</h4>
+          <p>El cliente carga los datos del viaje y recibe una estimación automática, con el mismo criterio siempre.</p>
+        </div>
+      </div>
+
+      <div class="cotizador">
+        <div class="campo-grid">
+          <div class="campo">
+            <label for="origen">Origen</label>
+            <input type="text" id="origen" placeholder="Ej: San Justo">
+          </div>
+          <div class="campo">
+            <label for="destino">Destino</label>
+            <input type="text" id="destino" placeholder="Ej: Mar del Plata">
+          </div>
+        </div>
+        <div class="campo-grid">
+          <div class="campo">
+            <label for="carga">Tipo de carga</label>
+            <select id="carga">
+              <option value="Paquetería chica">Paquetería chica</option>
+              <option value="Mercadería paletizada">Mercadería paletizada</option>
+              <option value="Carga completa (camión)">Carga completa (camión)</option>
+            </select>
+          </div>
+          <div class="campo">
+            <label for="urgencia">Urgencia</label>
+            <select id="urgencia">
+              <option value="Estándar (3-5 días)">Estándar (3-5 días)</option>
+              <option value="Urgente (24-48hs)">Urgente (24-48hs)</option>
+            </select>
+          </div>
+        </div>
+        <button class="demo-btn" id="btn-cotizar">Calcular estimación</button>
+
+        <div class="resultado" id="resultado">
+          <div class="rango" id="rango-precio"></div>
+          <div class="aclaracion">Esto es una estimación automática de ejemplo. El número final siempre lo confirma el transportista antes de cerrar el viaje.</div>
+          <pre id="pedido-texto"></pre>
+          <div class="resultado-actions">
+            <button id="btn-copiar">Copiar mensaje</button>
+            <a id="link-whatsapp" href="#" target="_blank" rel="noopener">Abrir en WhatsApp</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 4. CÓMO TRABAJO -->
+<section id="trabajo">
+  <div class="wrap">
+    <h2>Cómo trabajo</h2>
+    <ol class="pasos">
+      <li><span class="paso-num">01</span><span>Reunión de 20 minutos para entender cómo cotizás hoy.</span></li>
+      <li><span class="paso-num">02</span><span>Demo adaptada a tu criterio real, antes de hablar de números.</span></li>
+      <li><span class="paso-num">03</span><span>Alcance por escrito: qué entra y qué no.</span></li>
+      <li><span class="paso-num">04</span><span>Construcción en 14 días, con una reunión intermedia.</span></li>
+      <li><span class="paso-num">05</span><span>Entrega, con un ajuste incluido.</span></li>
+      <li><span class="paso-num">06</span><span>Definimos juntos cómo seguir después.</span></li>
+    </ol>
+  </div>
+</section>
+
+<!-- 5. CÓMO SE ARMA UN PRESUPUESTO -->
+<section id="presupuesto">
+  <div class="wrap">
+    <h2>Cómo se arma la inversión</h2>
+    <div class="presupuesto-box">
+      <p>El número se conversa en la reunión de 20 minutos, después de que probaste el armador de presupuestos funcionando.</p>
+      <p>Cotizo según cuántas variables de cálculo necesitás y cuántas zonas o tipos de carga hay que cargar.</p>
+      <p>Lo que definimos ahí sale de una demo vista, no de una idea sobre el papel.</p>
+    </div>
+  </div>
+</section>
+
+<!-- 6. PREGUNTAS FRECUENTES -->
+<section id="faq">
+  <div class="wrap">
+    <h2>Preguntas frecuentes</h2>
+
+    <details>
+      <summary>¿Cuánto sale?</summary>
+      <p>Lo vemos en la reunión de 20 minutos, después de que probaste la demo. Así cotizo tu caso, no un paquete genérico.</p>
+    </details>
+
+    <details>
+      <summary>¿Esto me da el precio exacto?</summary>
+      <p>No, da una estimación automática con tu criterio cargado. El número final siempre lo confirmás vos antes de cerrar el viaje.</p>
+    </details>
+
+    <details>
+      <summary>¿Sirve si mis tarifas cambian seguido?</summary>
+      <p>Sí, se puede actualizar fácil. Te muestro cómo hacerlo vos misma en la entrega.</p>
+    </details>
+
+    <details>
+      <summary>¿Necesito cargar todas mis zonas de una?</summary>
+      <p>No. Arrancamos con las rutas más pedidas y vamos sumando de a poco.</p>
+    </details>
+
+    <details>
+      <summary>¿Mis choferes o empleados pueden usarlo también?</summary>
+      <p>Sí, si varias personas cotizan hoy, esto hace que todos usen el mismo criterio.</p>
+    </details>
+
+    <details>
+      <summary>¿Reemplaza mi WhatsApp?</summary>
+      <p>No, lo complementa: el pedido de cotización con todos los datos te llega igual a tu WhatsApp.</p>
+    </details>
+
+    <details>
+      <summary>¿Y si no funciona como esperaba?</summary>
+      <p>La entrega incluye un ajuste. Si algo no cierra, lo vemos juntos antes de dar por cerrado el trabajo.</p>
+    </details>
+
+    <details>
+      <summary>¿Cuánto tiempo tarda?</summary>
+      <p>14 días desde que arrancamos, con una reunión intermedia para mostrar avances.</p>
+    </details>
+  </div>
+</section>
+
+<!-- 7. CTA FINAL -->
+<section class="cta-final">
+  <div class="wrap">
+    <h2>¿Lo ves claro?</h2>
+    <p>El siguiente paso es una reunión corta de 20 minutos. Ahí vemos tu caso puntual y te paso la inversión.</p>
+    <a class="stub-btn" href="https://wa.me/5491166083713" target="_blank" rel="noopener">Agendá 20 minutos</a>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">Kadesca — Soluciones IA · Karina Descalzo</div>
+</footer>
+
+<script>
+  // ============ DEMO: armador de presupuestos ============
+  // Estimación de ejemplo, no es un cálculo real de tarifas.
+  const btnCotizar = document.getElementById("btn-cotizar");
+  const resultado = document.getElementById("resultado");
+  const rangoPrecio = document.getElementById("rango-precio");
+  const pedidoTexto = document.getElementById("pedido-texto");
+  const linkWhatsapp = document.getElementById("link-whatsapp");
+  const btnCopiar = document.getElementById("btn-copiar");
+
+  function estimar(carga, urgencia) {
+    // Base de ejemplo según tipo de carga
+    let base = 15000;
+    if (carga === "Mercadería paletizada") base = 32000;
+    if (carga === "Carga completa (camión)") base = 68000;
+    // Recargo si es urgente
+    const factor = urgencia.startsWith("Urgente") ? 1.35 : 1;
+    const min = Math.round(base * factor * 0.9 / 100) * 100;
+    const max = Math.round(base * factor * 1.2 / 100) * 100;
+    return { min, max };
+  }
+
+  btnCotizar.addEventListener("click", () => {
+    const origen = document.getElementById("origen").value || "(sin especificar)";
+    const destino = document.getElementById("destino").value || "(sin especificar)";
+    const carga = document.getElementById("carga").value;
+    const urgencia = document.getElementById("urgencia").value;
+
+    const { min, max } = estimar(carga, urgencia);
+    rangoPrecio.textContent = `Estimación: $ ${min.toLocaleString("es-AR")} — $ ${max.toLocaleString("es-AR")}`;
+
+    const mensaje = `Hola! Quiero cotizar un flete:\n\n• Origen: ${origen}\n• Destino: ${destino}\n• Tipo de carga: ${carga}\n• Urgencia: ${urgencia}\n\n¿Me confirmás el precio final y disponibilidad?`;
+    pedidoTexto.textContent = mensaje;
+    resultado.classList.add("show");
+    linkWhatsapp.href = "https://wa.me/5491166083713?text=" + encodeURIComponent(mensaje);
+  });
+
+  btnCopiar.addEventListener("click", () => {
+    navigator.clipboard.writeText(pedidoTexto.textContent).then(() => {
+      btnCopiar.textContent = "¡Copiado!";
+      setTimeout(() => { btnCopiar.textContent = "Copiar mensaje"; }, 1500);
+    });
+  });
+</script>
+
+</body>
+</html>
